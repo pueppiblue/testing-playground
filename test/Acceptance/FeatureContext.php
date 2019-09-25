@@ -5,6 +5,7 @@ namespace Test\Acceptance;
 
 use Behat\Behat\Context\Context;
 use Exception;
+use LogicException;
 use PHPUnit\Framework\Assert;
 use Warehouse\Domain\Model\Product\ProductId;
 use Warehouse\Domain\Model\SalesOrder\SalesOrderId;
@@ -34,7 +35,7 @@ final class FeatureContext implements Context
     }
 
     /**
-     * @When I create a product :description
+     * @When  I create a product :description
      * @Given a product :description
      */
     public function iCreateAProduct($description)
@@ -82,11 +83,24 @@ final class FeatureContext implements Context
         $this->salesOrderId = $this->serviceContainer->placeSalesOrderService()->place($productsAndQuantities);
     }
 
+    /**
+     * @Then /^I can not deliver the sales order$/
+     */
+    public function iCanNotDeliverTheSalesOrder()
+    {
+        $this->expectException(
+            [$this->serviceContainer->deliverGoodsService(), 'deliver'],
+            [(string) $this->salesOrderId],
+            LogicException::class,
+            'Not enough goods in stock to deliver product'
+        );
+    }
 
-    private function expectException(callable $function, string $exceptionClass, string $exceptionMessage): void
+
+    private function expectException(callable $function, array $args, string $exceptionClass, string $exceptionMessage): void
     {
         try {
-            $function();
+            $function(...$args);
 
             throw new ExpectedAnException();
         } catch (Exception $exception) {
