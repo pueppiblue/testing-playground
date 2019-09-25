@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Test\Acceptance;
 
 use Behat\Behat\Context\Context;
+use Exception;
 use PHPUnit\Framework\Assert;
 use Warehouse\Domain\Model\Product\ProductId;
 use Warehouse\Domain\Model\SalesOrder\SalesOrderId;
@@ -80,4 +81,25 @@ final class FeatureContext implements Context
         $productsAndQuantities = [(string) $this->productId => $quantity];
         $this->salesOrderId = $this->serviceContainer->placeSalesOrderService()->place($productsAndQuantities);
     }
+
+
+    private function expectException(callable $function, string $exceptionClass, string $exceptionMessage): void
+    {
+        try {
+            $function();
+
+            throw new ExpectedAnException();
+        } catch (Exception $exception) {
+            if ($exception instanceof ExpectedAnException) {
+                throw $exception;
+            }
+
+            Assert::assertInstanceOf($exceptionClass, $exception);
+            Assert::assertContains(
+                $exceptionMessage,
+                $exception->getMessage()
+            );
+        }
+    }
+
 }
