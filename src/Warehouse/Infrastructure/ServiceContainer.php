@@ -127,7 +127,6 @@ final class ServiceContainer
             // For debugging purposes:
             $service->subscribeToAllEvents(
                 function ($event) {
-                    dump($event);
                 }
             );
         }
