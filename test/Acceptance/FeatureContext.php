@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Test\Acceptance;
 
 use Behat\Behat\Context\Context;
-use Behat\Behat\Tester\Exception\PendingException;
 use PHPUnit\Framework\Assert;
 use Warehouse\Domain\Model\Product\ProductId;
+use Warehouse\Domain\Model\SalesOrder\SalesOrderId;
 use Warehouse\Infrastructure\ServiceContainer;
 
 final class FeatureContext implements Context
@@ -20,6 +20,9 @@ final class FeatureContext implements Context
      * @var ProductId
      */
     private $productId;
+
+    /** @var SalesOrderId */
+    private $salesOrderId;
 
     /**
      * @BeforeScenario
@@ -67,5 +70,14 @@ final class FeatureContext implements Context
         $productsAndQuantities = [(string) $this->productId => $quantity];
         $salesOrderId = $this->serviceContainer->placeSalesOrderService()->place($productsAndQuantities);
         $this->serviceContainer->deliverGoodsService()->deliver((string) $salesOrderId);
+    }
+
+    /**
+     * @When /^I create a sales order for (\d+) items of this product$/
+     */
+    public function iCreateASalesOrderForItemsOfThisProduct(int $quantity)
+    {
+        $productsAndQuantities = [(string) $this->productId => $quantity];
+        $this->salesOrderId = $this->serviceContainer->placeSalesOrderService()->place($productsAndQuantities);
     }
 }
