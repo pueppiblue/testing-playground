@@ -12,8 +12,10 @@ use Warehouse\Application\ReadModel\BalanceRepository;
 use Warehouse\Application\ReadModel\UpdateBalance;
 use Warehouse\Application\ReceiveGoodsService;
 use Warehouse\Domain\Model\DeliveryNote\DeliveryNoteRepository;
+use Warehouse\Domain\Model\DeliveryNote\GoodsDelivered;
 use Warehouse\Domain\Model\Product\ProductCreated;
 use Warehouse\Domain\Model\Product\ProductRepository;
+use Warehouse\Domain\Model\ReceiptNote\GoodsReceived;
 use Warehouse\Domain\Model\ReceiptNote\ReceiptNoteRepository;
 use Warehouse\Domain\Model\SalesOrder\SalesOrderRepository;
 
@@ -87,28 +89,6 @@ final class ServiceContainer
         return $service ?: $service = new DeliveryNoteAggregateRepository($this->eventDispatcher());
     }
 
-    private function eventDispatcher(): EventDispatcher
-    {
-        static $service;
-
-        if ($service === null) {
-            $service = new EventDispatcher();
-
-            // Register your event subscribers here:
-            $service->registerSubscriber(
-                ProductCreated::class,
-                [$this->updateBalanceListener(), 'whenProductCreated']
-            );
-
-            // For debugging purposes:
-            $service->subscribeToAllEvents(function ($event) {
-                dump($event);
-            });
-        }
-
-        return $service;
-    }
-
     public function balanceRepository(): BalanceRepository
     {
         static $service;
@@ -121,5 +101,37 @@ final class ServiceContainer
         static $service;
 
         return $service ?: $service = new UpdateBalance($this->balanceRepository());
+    }
+
+    private function eventDispatcher(): EventDispatcher
+    {
+        static $service;
+
+        if ($service === null) {
+            $service = new EventDispatcher();
+
+            // Register your event subscribers here:
+            $service->registerSubscriber(
+                ProductCreated::class,
+                [$this->updateBalanceListener(), 'whenProductCreated']
+            );
+            $service->registerSubscriber(
+                GoodsDelivered::class,
+                [$this->updateBalanceListener(), 'whenGoodsDelivered']
+            );
+            $service->registerSubscriber(
+                GoodsReceived::class,
+                [$this->updateBalanceListener(), 'whenGoodsReceived']
+            );
+
+            // For debugging purposes:
+            $service->subscribeToAllEvents(
+                function ($event) {
+                    dump($event);
+                }
+            );
+        }
+
+        return $service;
     }
 }
